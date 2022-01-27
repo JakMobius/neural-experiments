@@ -12,16 +12,16 @@
 
 class DotSeparator : public GeneralApp {
 
-    double scale = 1;
-    bool shift_pressed = false;
+    bool m_shift_pressed = false;
+    double m_camera_scale = 1;
 
-    std::vector<sf::Vector2<double>> white_points {};
-    std::vector<sf::Vector2<double>> black_points {};
+    std::vector<sf::Vector2<double>> m_white_points {};
+    std::vector<sf::Vector2<double>> m_black_points {};
 
-    sf::CircleShape white_point { 10 };
-    sf::CircleShape black_point { 10 };
+    sf::CircleShape m_white_point { 10 };
+    sf::CircleShape m_black_point { 10 };
 
-    std::unique_ptr<NeuralNetwork> net {};
+    std::unique_ptr<NeuralNetwork> m_net {};
 
 public:
     DotSeparator();

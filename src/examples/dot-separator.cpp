@@ -8,68 +8,68 @@
 DotSeparator::DotSeparator() : GeneralApp() {
     create_window(200, 200, 4);
 
-    net = std::make_unique<NeuralNetwork>(2, 1, std::vector<int> {
+    m_net = std::make_unique<NeuralNetwork>(2, 1, std::vector<int> {
         16, 16, 16, 16
     });
 
-    net->set_learning_rate(0.01);
+    m_net->set_learning_rate(0.01);
 
     for(int i = 0; i < 10; i++) {
-        white_points.emplace_back(-0.5 + 0.1 * i, 0.1 + sin((double)i * 0.7) * 0.15);
-        black_points.emplace_back(-0.5 + 0.1 * i, sin((double)i * 0.7) * 0.15);
-        white_points.emplace_back(-0.5 + 0.1 * i, -0.1 + sin((double)i * 0.7) * 0.15);
+        m_white_points.emplace_back(-0.5 + 0.1 * i, 0.1 + sin((double)i * 0.7) * 0.15);
+        m_black_points.emplace_back(-0.5 + 0.1 * i, sin((double)i * 0.7) * 0.15);
+        m_white_points.emplace_back(-0.5 + 0.1 * i, -0.1 + sin((double)i * 0.7) * 0.15);
     }
 
-    white_point.setFillColor({255, 255, 255, 255});
-    black_point.setFillColor({0, 0, 0, 255});
-    white_point.setOutlineColor({0, 255, 0, 255});
-    black_point.setOutlineColor({0, 255, 0, 255});
-    white_point.setOutlineThickness(2);
-    black_point.setOutlineThickness(2);
+    m_white_point.setFillColor({255, 255, 255, 255});
+    m_black_point.setFillColor({0, 0, 0, 255});
+    m_white_point.setOutlineColor({0, 255, 0, 255});
+    m_black_point.setOutlineColor({0, 255, 0, 255});
+    m_white_point.setOutlineThickness(2);
+    m_black_point.setOutlineThickness(2);
 
-    white_point.setOrigin(10, 10);
-    black_point.setOrigin(10, 10);
+    m_white_point.setOrigin(10, 10);
+    m_black_point.setOrigin(10, 10);
 }
 
 void DotSeparator::learn() {
-    auto& inputs = net->get_input();
-    auto& outputs = net->get_output();
-    auto& errors = net->get_errors();
+    auto& inputs = m_net->get_input();
+    auto& outputs = m_net->get_output();
+    auto& errors = m_net->get_errors();
 
     for(int i = 0; i < 1000; i++) {
 
-        for(auto& point : black_points) {
+        for(auto& point : m_black_points) {
             inputs[0] = point.x;
             inputs[1] = point.y;
 
-            net->evaluate<Sigmoid>();
+            m_net->evaluate<Sigmoid>();
             errors[0] = 0.0 - outputs[0];
-            net->descent<Sigmoid>();
+            m_net->descent<Sigmoid>();
         }
 
-        for(auto& point : white_points) {
+        for(auto& point : m_white_points) {
             inputs[0] = point.x;
             inputs[1] = point.y;
 
-            net->evaluate<Sigmoid>();
+            m_net->evaluate<Sigmoid>();
             errors[0] = 1.0 - outputs[0];
-            net->descent<Sigmoid>();
+            m_net->descent<Sigmoid>();
         }
     }
 }
 
 void DotSeparator::redraw() {
-    auto& inputs = net->get_input();
-    auto& outputs = net->get_output();
+    auto& inputs = m_net->get_input();
+    auto& outputs = m_net->get_output();
 
     for(int i = 0; i < m_window_height * m_window_width; i++) {
         auto rel_x = (double)(i % m_window_width) / (double)m_window_width;
         auto rel_y = (double)(i / m_window_width) / (double)m_window_height;
 
-        inputs[0] = (rel_x - 0.5) * scale;
-        inputs[1] = (rel_y - 0.5) * scale;
+        inputs[0] = (rel_x - 0.5) * m_camera_scale;
+        inputs[1] = (rel_y - 0.5) * m_camera_scale;
 
-        net->evaluate<Sigmoid>();
+        m_net->evaluate<Sigmoid>();
 
         m_pixels[i * 4 + 0] = to_brightness(outputs[0]);
         m_pixels[i * 4 + 1] = to_brightness(outputs[0]);
@@ -82,34 +82,34 @@ void DotSeparator::on_key_press(sf::Keyboard::Key key) {
     switch(key) {
         case sf::Keyboard::Up: adjust_learning_rate(1.25); break;
         case sf::Keyboard::Down: adjust_learning_rate(1/1.25); break;
-        case sf::Keyboard::LShift: shift_pressed = true; break;
-        case sf::Keyboard::C: black_points.clear(); white_points.clear(); break;
+        case sf::Keyboard::LShift: m_shift_pressed = true; break;
+        case sf::Keyboard::C: m_black_points.clear(); m_white_points.clear(); break;
         default: break;
     }
 }
 
 void DotSeparator::on_key_release(sf::Keyboard::Key key) {
     switch(key) {
-        case sf::Keyboard::LShift: shift_pressed = false; break;
+        case sf::Keyboard::LShift: m_shift_pressed = false; break;
         default: break;
     }
 }
 
 void DotSeparator::on_draw() {
-    for(auto& point : black_points) {
-        black_point.setPosition(window_coordinates(point + sf::Vector2<double> {0.5, 0.5}));
-        m_window->draw(black_point);
+    for(auto& point : m_black_points) {
+        m_black_point.setPosition(window_coordinates(point + sf::Vector2<double> {0.5, 0.5}));
+        m_window->draw(m_black_point);
     }
 
-    for(auto& point : white_points) {
-        white_point.setPosition(window_coordinates(point + sf::Vector2<double> {0.5, 0.5}));
-        m_window->draw(white_point);
+    for(auto& point : m_white_points) {
+        m_white_point.setPosition(window_coordinates(point + sf::Vector2<double> {0.5, 0.5}));
+        m_window->draw(m_white_point);
     }
 }
 
 void DotSeparator::on_mouse_press(double x, double y) {
-    if(shift_pressed) black_points.emplace_back(x - 0.5, y - 0.5);
-    else white_points.emplace_back(x - 0.5, y - 0.5);
+    if(m_shift_pressed) m_black_points.emplace_back(x - 0.5, y - 0.5);
+    else m_white_points.emplace_back(x - 0.5, y - 0.5);
 }
 
 void DotSeparator::on_tick() {
@@ -118,7 +118,7 @@ void DotSeparator::on_tick() {
 }
 
 void DotSeparator::adjust_learning_rate(double coef) {
-    net->set_learning_rate(net->get_learning_rate() * coef);
+    m_net->set_learning_rate(m_net->get_learning_rate() * coef);
 
-    std::cout << "Adjusted learning rate to " << net->get_learning_rate() << "\n";
+    std::cout << "Adjusted learning rate to " << m_net->get_learning_rate() << "\n";
 }

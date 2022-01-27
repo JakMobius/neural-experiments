@@ -13,13 +13,13 @@
 
 class ImageMemorizer : public GeneralApp {
 
-    double scale = 1;
-    int tick_steps = 1000;
+    int m_tick_steps = 1000;
+    double m_camera_scale = 1;
 
-    std::mt19937 rng = {};
+    std::mt19937 m_rng = {};
 
-    std::unique_ptr<sf::Image> target_image {};
-    std::unique_ptr<NeuralNetwork> net {};
+    std::unique_ptr<sf::Image> m_target_image {};
+    std::unique_ptr<NeuralNetwork> m_net {};
 
 public:
     ImageMemorizer();

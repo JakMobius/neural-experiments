@@ -5,38 +5,38 @@
 #include "image-memorizer.hpp"
 
 ImageMemorizer::ImageMemorizer() : GeneralApp() {
-    net = std::make_unique<NeuralNetwork>(2, 3, std::vector<int> {
+    m_net = std::make_unique<NeuralNetwork>(2, 3, std::vector<int> {
             8, 8, 8, 8, 8, 8, 8, 8
     });
 
-    target_image = std::make_unique<sf::Image>();
-    target_image->loadFromFile("./resources/target.png");
+    m_target_image = std::make_unique<sf::Image>();
+    m_target_image->loadFromFile("./resources/target.png");
 
-    create_window(target_image->getSize().x, target_image->getSize().y);
+    create_window(m_target_image->getSize().x, m_target_image->getSize().y);
 }
 
 void ImageMemorizer::learn() {
-    auto& inputs = net->get_input();
-    auto& outputs = net->get_output();
-    auto& errors = net->get_errors();
+    auto& inputs = m_net->get_input();
+    auto& outputs = m_net->get_output();
+    auto& errors = m_net->get_errors();
 
-    auto image_size = target_image->getSize();
+    auto image_size = m_target_image->getSize();
     auto matrix_size = m_window_height * m_window_width;
 
     double loss = 0;
 
-    for(int step = 0; step < tick_steps; step++) {
-        int i = rng() % matrix_size;
+    for(int step = 0; step < m_tick_steps; step++) {
+        int i = m_rng() % matrix_size;
 
         auto rel_x = (double)(i % m_window_width) / (double)m_window_width;
         auto rel_y = (double)(i / m_window_width) / (double)m_window_height;
 
-        inputs[0] = rel_x * scale - scale / 2;
-        inputs[1] = rel_y * scale - scale / 2;
+        inputs[0] = rel_x * m_camera_scale - m_camera_scale / 2;
+        inputs[1] = rel_y * m_camera_scale - m_camera_scale / 2;
 
-        auto pixel = target_image->getPixel(rel_x * image_size.x, rel_y * image_size.y);
+        auto pixel = m_target_image->getPixel(rel_x * image_size.x, rel_y * image_size.y);
 
-        net->evaluate<Sigmoid>();
+        m_net->evaluate<Sigmoid>();
 
         errors[0] = from_brightness(pixel.r) - outputs[0];
         errors[1] = from_brightness(pixel.g) - outputs[1];
@@ -44,24 +44,24 @@ void ImageMemorizer::learn() {
 
         loss += abs(errors[0]) + abs(errors[1]) + abs(errors[2]);
 
-        net->descent<Sigmoid>();
+        m_net->descent<Sigmoid>();
     }
 
     std::cout << "learn: " << loss << "\n";
 }
 
 void ImageMemorizer::redraw() {
-    std::vector<double>& inputs = net->get_input();
-    const std::vector<double>& outputs = net->get_output();
+    std::vector<double>& inputs = m_net->get_input();
+    const std::vector<double>& outputs = m_net->get_output();
 
     for(int i = 0; i < m_window_height * m_window_width; i++) {
         auto rel_x = (double)(i % m_window_width) / (double)m_window_width;
         auto rel_y = (double)(i / m_window_width) / (double)m_window_height;
 
-        inputs[0] = rel_x * scale - scale / 2;
-        inputs[1] = rel_y * scale - scale / 2;
+        inputs[0] = rel_x * m_camera_scale - m_camera_scale / 2;
+        inputs[1] = rel_y * m_camera_scale - m_camera_scale / 2;
 
-        net->evaluate<Sigmoid>();
+        m_net->evaluate<Sigmoid>();
 
         m_pixels[i * 4 + 0] = to_brightness(outputs[0]);
         m_pixels[i * 4 + 1] = to_brightness(outputs[1]);
@@ -90,5 +90,5 @@ void ImageMemorizer::on_tick() {
 }
 
 void ImageMemorizer::adjust_learning_rate(double coef) {
-    net->set_learning_rate(net->get_learning_rate() * coef);
+    m_net->set_learning_rate(m_net->get_learning_rate() * coef);
 }
