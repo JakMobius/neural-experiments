@@ -8,15 +8,16 @@
 #include <SFML/Graphics/CircleShape.hpp>
 #include "../perceptron/neural-network.hpp"
 #include "../activators/sigmoid.hpp"
-#include "../general-app.hpp"
+#include "../bitmap-app.hpp"
+#include "../utils/vec2.hpp"
 
-class DotSeparator : public GeneralApp {
+class DotSeparator : public BitmapApp {
 
     bool m_shift_pressed = false;
     double m_camera_scale = 1;
 
-    std::vector<sf::Vector2<double>> m_white_points {};
-    std::vector<sf::Vector2<double>> m_black_points {};
+    std::vector<Vec2d> m_white_points {};
+    std::vector<Vec2d> m_black_points {};
 
     sf::CircleShape m_white_point { 10 };
     sf::CircleShape m_black_point { 10 };

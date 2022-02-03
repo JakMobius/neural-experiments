@@ -4,7 +4,7 @@
 
 #include "image-memorizer.hpp"
 
-ImageMemorizer::ImageMemorizer() : GeneralApp() {
+ImageMemorizer::ImageMemorizer() : BitmapApp() {
     m_net = std::make_unique<NeuralNetwork>(2, 3, std::vector<int> {
             8, 8, 8, 8, 8, 8, 8, 8
     });

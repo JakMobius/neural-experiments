@@ -5,7 +5,7 @@
 #include "dot-separator.hpp"
 #include "../utils.hpp"
 
-DotSeparator::DotSeparator() : GeneralApp() {
+DotSeparator::DotSeparator() : BitmapApp() {
     create_window(200, 200, 4);
 
     m_net = std::make_unique<NeuralNetwork>(2, 1, std::vector<int> {
@@ -97,12 +97,14 @@ void DotSeparator::on_key_release(sf::Keyboard::Key key) {
 
 void DotSeparator::on_draw() {
     for(auto& point : m_black_points) {
-        m_black_point.setPosition(window_coordinates(point + sf::Vector2<double> {0.5, 0.5}));
+        auto window_point = window_coordinates(point + Vec2d {0.5, 0.5});
+        m_black_point.setPosition({window_point.x, window_point.y});
         m_window->draw(m_black_point);
     }
 
     for(auto& point : m_white_points) {
-        m_white_point.setPosition(window_coordinates(point + sf::Vector2<double> {0.5, 0.5}));
+        auto window_point = window_coordinates(point + Vec2d {0.5, 0.5});
+        m_white_point.setPosition({window_point.x, window_point.y});
         m_window->draw(m_white_point);
     }
 }

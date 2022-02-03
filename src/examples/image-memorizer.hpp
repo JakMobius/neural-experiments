@@ -8,10 +8,10 @@
 #include <SFML/Graphics/CircleShape.hpp>
 #include "../perceptron/neural-network.hpp"
 #include "../activators/sigmoid.hpp"
-#include "../general-app.hpp"
+#include "../bitmap-app.hpp"
 #include "../utils.hpp"
 
-class ImageMemorizer : public GeneralApp {
+class ImageMemorizer : public BitmapApp {
 
     int m_tick_steps = 1000;
     double m_camera_scale = 1;
