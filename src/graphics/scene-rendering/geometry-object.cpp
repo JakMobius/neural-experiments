@@ -2,7 +2,7 @@
 // Created by Артем on 02.02.2022.
 //
 
-#include "scene-object-handle.hpp"
+#include "geometry-object.hpp"
 #include "geometry-pool.hpp"
 
 void Graphics::GeometryObject::update_transform() {

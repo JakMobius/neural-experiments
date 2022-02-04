@@ -4,6 +4,25 @@
 
 #include "scene-renderer.hpp"
 
+Graphics::SceneRenderer::SceneRenderer() {
+
+    m_shadow_map_framebuffer.initialize();
+    for(auto& framebuffer : m_shadow_buffers) framebuffer.initialize();
+
+    m_shadow_map_framebuffer.set_size(m_shadow_map_resolution);
+
+    m_shadow_projection_program.set_renderer(this);
+    m_shadow_mapping_program.set_renderer(this);
+    m_final_program.set_renderer(this);
+
+    auto vertex_buffer = m_geometry_pool.get_vertex_buffer();
+
+    m_shadow_projection_program.bind_to_vertex_buffer(vertex_buffer);
+    m_shadow_mapping_program.bind_to_vertex_buffer(vertex_buffer);
+    m_final_program.bind_to_vertex_buffer(vertex_buffer);
+
+}
+
 void Graphics::SceneRenderer::draw() {
 
     m_geometry_pool.defragment_buffer(1);
@@ -69,24 +88,4 @@ void Graphics::SceneRenderer::set_screen_size(const Vec2i &size) {
 
 Vec3f Graphics::SceneRenderer::get_ambient_light() {
     return m_ambient_light;
-}
-
-Graphics::SceneRenderer::SceneRenderer(Graphics::Scene* scene) :
-        m_scene(scene) {
-
-    m_shadow_map_framebuffer.initialize();
-    for(auto& framebuffer : m_shadow_buffers) framebuffer.initialize();
-
-    m_shadow_map_framebuffer.set_size(m_shadow_map_resolution);
-
-    m_shadow_projection_program.set_renderer(this);
-    m_shadow_mapping_program.set_renderer(this);
-    m_final_program.set_renderer(this);
-
-    auto vertex_buffer = m_geometry_pool.get_vertex_buffer();
-
-    m_shadow_projection_program.bind_to_vertex_buffer(vertex_buffer);
-    m_shadow_mapping_program.bind_to_vertex_buffer(vertex_buffer);
-    m_final_program.bind_to_vertex_buffer(vertex_buffer);
-
 }

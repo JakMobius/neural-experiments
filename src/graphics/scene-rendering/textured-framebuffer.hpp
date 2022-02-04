@@ -37,6 +37,8 @@ struct TexturedFramebuffer {
         m_texture.set_format(Graphics::GLTextureFormat::rgb);
         m_texture.set_parameter(Graphics::GLTextureParameter::texture_mag_filter, GL_NEAREST);
         m_texture.set_parameter(Graphics::GLTextureParameter::texture_min_filter, GL_NEAREST);
+        m_texture.set_parameter(Graphics::GLTextureParameter::texture_wrap_s, GL_CLAMP_TO_EDGE);
+        m_texture.set_parameter(Graphics::GLTextureParameter::texture_wrap_t, GL_CLAMP_TO_EDGE);
     }
 
     virtual void resize_framebuffer() {

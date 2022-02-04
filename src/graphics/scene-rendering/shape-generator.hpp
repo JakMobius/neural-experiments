@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../utils/vec3.hpp"
-#include "scene-object-config.hpp"
+#include "geometry-object-config.hpp"
 
 class ShapeGenerator {
 

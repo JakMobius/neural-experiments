@@ -3,7 +3,6 @@
 //
 
 #include "evolution-simulator.hpp"
-#include "../../graphics/scene-rendering/shape-generator.hpp"
 
 void EvolutionSimulator::on_tick() {
     reset_gl();
@@ -20,14 +19,8 @@ void EvolutionSimulator::on_mouse_move(double x, double y) {
 }
 
 void EvolutionSimulator::on_draw() {
-    if(object) {
-        phase += 0.01;
-
-        auto matrix = Matrix4f::rotation_y_matrix(phase) * Matrix4f::translation_matrix(0, 0.3 * sin(phase * 2), 3);
-
-        object->set_transform(matrix);
-    }
-    m_scene->draw();
+    m_world->tick(1.0f / 60.0f);
+    m_world->draw();
 }
 
 void EvolutionSimulator::create_window(int width, int height) {
@@ -66,49 +59,64 @@ void EvolutionSimulator::clear_window() {
 void EvolutionSimulator::on_key_press(sf::Keyboard::Key key) {
     GeneralApp::on_key_press(key);
 
-    if(key == sf::Keyboard::LControl) remove_cube();
+
 }
 
 void EvolutionSimulator::on_key_release(sf::Keyboard::Key key) {
     GeneralApp::on_key_release(key);
-
-    if(key == sf::Keyboard::LControl) add_cube();
 }
 
-void EvolutionSimulator::create_scene() {
-    ShapeGenerator shape_generator {};
+EvolutionSimulator::EvolutionSimulator() : GeneralApp() {
+    create_window(1600, 1600);
+    m_world = std::make_unique<EvolutionWorld>();
+    m_camera = std::make_unique<PerspectiveCamera>();
 
-    shape_generator.add_cube({0, -2, 0}, {10, 0.1, 10}, {
-            {0.7, 0.4, 0.5},
-            {0.7, 0.4, 0.5},
-            {0.7, 0.4, 0.5},
-            {0.7, 0.4, 0.5},
-            {0.7, 0.4, 0.5},
-            {0.7, 0.4, 0.5},
-    });
+    m_camera->set_position({0, 3, -3});
 
-    m_scene->get_renderer()->get_geometry_pool()->create_object({shape_generator.get_mesh()}, nullptr);
-    shape_generator.reset();
+    m_world->get_renderer()->set_camera(m_camera.get());
+    m_user_controller.set_controlled_camera(m_camera.get());
+    auto size = m_window->getSize();
+    m_world->set_screen_size({(int) size.x, (int) size.y});
 
-    m_scene->get_renderer()->add_light({{-0.25, -1, -0.5}, {1, 1, 1}});
-}
-
-void EvolutionSimulator::add_cube() {
-    ShapeGenerator generator;
-
-    generator.add_cube({0, 0, 0}, {1, 1, 1}, {1, 1, 1});
-    object = m_scene->get_renderer()->get_geometry_pool()->create_object({generator.get_mesh()}, nullptr);
-    generator.reset();
-
-    for(int i = 0; i < 3; i++) {
-        generator.add_cube({(float)(i-1) / 2, -1, 0}, {0.1, 0.1, 0.1}, {1, 1, 1});
-        m_scene->get_renderer()->get_geometry_pool()->create_object({generator.get_mesh()}, object);
-        generator.reset();
+    for(int i = 0; i < 500; i++) {
+        add_creature();
     }
+
+    m_world->get_renderer()->add_light({{ 0.3, -0.8, 0.5 }, { 1, 1, 1 }});
 }
 
-void EvolutionSimulator::remove_cube() {
-    if(!object) return;
-    m_scene->get_renderer()->get_geometry_pool()->remove_object(object);
-    object = nullptr;
+void EvolutionSimulator::add_creature() {
+
+    float randomized = (float)rng() / (float)std::mt19937::max();
+
+    Vec3f offset = { 170 + randomized, 0, 10 + randomized };
+
+    std::vector<VertexConfig> vertices_config {
+            { 0.5f, 10.0f, offset + Vec3f {2, 0, -2} },
+            { 0.5f, 10.0f, offset + Vec3f {2, 0, 2} },
+            { 0.5f, 10.0f, offset + Vec3f {-2, 0, -2} },
+            { 0.5f, 10.0f, offset + Vec3f {0, 2, 0} }
+    };
+
+    std::vector<SpringConfig> springs_config {
+            { randomized + 50.0f, randomized + 5.0f,3.0f, 0, 1 },
+            { randomized + 50.0f, randomized + 5.0f,3.0f, 1, 2 },
+            { randomized + 50.0f, randomized + 5.0f,3.0f, 2, 0 },
+            { randomized + 50.0f, randomized + 5.0f,3.0f, 0, 3 },
+            { randomized + 50.0f, randomized + 5.0f,3.0f, 1, 3 },
+            { randomized + 50.0f, randomized + 5.0f,3.0f, 2, 3 }
+    };
+
+    CreatureConfig config {
+            std::move(vertices_config),
+            std::move(springs_config)
+    };
+
+    auto creature = new Creature(m_world.get(), config);
+
+    for(auto vertex : creature->get_vertices()) {
+        vertex->get_physics_vertex()->m_velocity = {-90 + randomized, 3 + randomized, 0};
+    }
+
+    if(!m_creature) m_creature = creature;
 }

@@ -3,8 +3,8 @@
 #include <map>
 #include "../gl/gl-buffer.hpp"
 #include "../gl/gl-texture-buffer.hpp"
-#include "scene-object-handle.hpp"
-#include "scene-object-config.hpp"
+#include "geometry-object.hpp"
+#include "geometry-object-config.hpp"
 #include "../../utils/vec2.hpp"
 #include "../../utils/index-pool.hpp"
 #include "../../utils/linked-list.hpp"

@@ -10,8 +10,10 @@ class UserController {
     GeneralApp* app;
     Camera* m_controlled_camera;
     bool m_dummy_mouse_event_received = false;
-    double pitch = 0;
-    double yaw = 0;
+    float m_pitch = 0;
+    float m_camera_speed = 10.0f;
+    float yaw = 0;
+    bool m_capture_mouse = true;
 
     void move_mouse_to_center() {
         auto size = app->get_window()->getSize();
@@ -42,6 +44,8 @@ public:
     }
 
     void on_mouse_move(double x, double y) {
+        if(!m_capture_mouse) return;
+
         auto size = app->get_window()->getSize();
         Vec2f center = {(float)size.x / 2, (float)size.y / 2};
 
@@ -49,9 +53,9 @@ public:
         Vec2f delta = position - center;
 
         if(delta.len_squared() > 0) {
-            pitch += delta.y / (float) size.y;
+            m_pitch += delta.y / (float) size.y;
             yaw -= delta.x / (float) size.x;
-            m_controlled_camera->set_pitch_yaw(pitch, yaw);
+            m_controlled_camera->set_pitch_yaw(m_pitch, yaw);
             move_mouse_to_center();
             app->get_window()->setMouseCursorVisible(false);
         } else {
@@ -63,11 +67,16 @@ public:
 
         Vec3f motion = UserController::get_motion_vector() * 0.01;
         motion *= Matrix4f::rotation_y_matrix(yaw);
-        m_controlled_camera->get_position() += motion;
+        m_controlled_camera->get_position() += motion * m_camera_speed;
 
-        if(app->get_window()->hasFocus() && !m_dummy_mouse_event_received) {
+        if(m_capture_mouse && app->get_window()->hasFocus() && !m_dummy_mouse_event_received) {
             move_mouse_to_center();
             m_dummy_mouse_event_received = false;
         }
+    }
+
+    void set_capture_mouse(bool capture) {
+        m_capture_mouse = capture;
+
     }
 };

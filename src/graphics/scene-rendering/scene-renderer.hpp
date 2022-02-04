@@ -6,7 +6,6 @@ class SceneRenderer;
 
 }
 
-#include "scene.hpp"
 #include "programs/shadow-projection-program.hpp"
 #include "programs/shadow-mapping-program.hpp"
 #include "programs/scene-rendering-program.hpp"
@@ -19,8 +18,6 @@ namespace Graphics {
 
 class SceneRenderer {
     const Vec2i m_shadow_map_resolution = {2048, 2048};
-
-    Scene* m_scene = nullptr;
 
     ShadowProjectionProgram m_shadow_projection_program {};
     ShadowMappingProgram m_shadow_mapping_program {};
@@ -41,6 +38,8 @@ class SceneRenderer {
     int m_current_light_index = 0;
 
 public:
+
+    SceneRenderer();
 
     void set_screen_size(const Vec2i& size);
 
@@ -72,8 +71,6 @@ public:
 
         return &m_shadow_buffers[1 - m_current_light_index % 2];
     }
-
-    SceneRenderer(Scene* scene);
 
     static Vec3f get_light_up(const Vec3f &direction);
     void prepare_light(const SceneDirectionalLight& light);
