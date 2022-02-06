@@ -4,25 +4,30 @@
 #include <unordered_set>
 #include "vertex.hpp"
 #include "spring.hpp"
+#include "physics-thread.hpp"
 
-class PhysicsEngine {
-    std::unordered_set<PhysicsVertex*> physics_vertices {};
-    std::unordered_set<PhysicsSpring*> physics_springs {};
+class ConcurrentPhysicsEngine {
+    std::vector<PhysicsThread*> m_threads {};
 
-    Vec3f m_gravity = { 0, -9.81, 0 };
+    Vec3f m_gravity { 0, -9.81, 0 };
     float m_floor_level = 0.25;
+    float m_dt = 1.0f / 60.0f;
+    int m_substeps_count = 5;
+    int m_thread_count = 8;
 
-    void clear_forces();
-    void apply_forces(float dt);
-    void apply_velocities(float dt);
+    template<typename Comparator, typename MemberFunc>
+    PhysicsThread* choose_thread(Comparator comp, MemberFunc func);
 
 public:
-    PhysicsEngine() {}
+    ConcurrentPhysicsEngine();
+    ~ConcurrentPhysicsEngine();
 
-    void register_vertex(PhysicsVertex* vertex) { physics_vertices.insert(vertex); }
-    void register_spring(PhysicsSpring* spring) { physics_springs.insert(spring); }
-    void delete_vertex(PhysicsVertex* vertex) { physics_vertices.erase(vertex); }
-    void delete_spring(PhysicsSpring* spring) { physics_springs.erase(spring); }
+    void add_creature(Creature* creature);
+    void remove_creature(Creature* creature);
 
-    void tick(float dt);
+    void tick();
+    float get_dt();
+    int get_substeps();
+    Vec3f get_gravity();
+    float get_floor_level();
 };

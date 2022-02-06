@@ -5,62 +5,62 @@
 #include "physics-engine.hpp"
 #include "../../../utils/vec2.hpp"
 
-void PhysicsEngine::tick(float dt) {
-    clear_forces();
+void ConcurrentPhysicsEngine::tick() {
+    atomic_thread_fence(std::memory_order_acquire);
 
-    for(auto& spring : physics_springs) {
-        spring->force_tick(dt);
-    }
-
-    for(auto& vertex : physics_vertices) {
-        vertex->m_force += m_gravity * vertex->m_mass;
-    }
-
-    apply_forces(dt);
-    apply_velocities(dt);
-}
-
-void PhysicsEngine::clear_forces() {
-    for(auto& vertex : physics_vertices) {
-        vertex->m_force = {0, 0, 0};
+    for(int i = 0; i < m_substeps_count; i++) {
+        for(auto &thread: m_threads) thread->run_async();
+        for(auto &thread: m_threads) thread->wait();
     }
 }
 
-void PhysicsEngine::apply_forces(float dt) {
-    for(auto& vertex : physics_vertices) {
-        if(vertex->m_position.y < m_floor_level) {
-            vertex->m_position.y = m_floor_level;
-
-            if(vertex->m_velocity.y < 0) vertex->m_velocity.y = 0;
-
-            if(vertex->m_force.y < 0) {
-                float friction = -vertex->m_force.y * vertex->m_floor_friction;
-                float epsilon = friction * dt / vertex->m_mass;
-
-                Vec2f horizontal_velocity = { vertex->m_velocity.x, vertex->m_velocity.z };
-                Vec2f horizontal_force = { vertex->m_force.x, vertex->m_force.z };
-                float velocity_modulo = horizontal_velocity.len();
-
-                if(velocity_modulo < epsilon) {
-                    horizontal_velocity = {0, 0};
-                    horizontal_force = {0, 0};
-                }
-                else horizontal_force -= (horizontal_velocity / velocity_modulo) * friction;
-
-                vertex->m_velocity.x = horizontal_velocity.x;
-                vertex->m_velocity.z = horizontal_velocity.y;
-
-                vertex->m_force.x = horizontal_force.x;
-                vertex->m_force.z = horizontal_force.y;
-            }
-        }
-
-        vertex->m_velocity += vertex->m_force * dt / vertex->m_mass;
+ConcurrentPhysicsEngine::ConcurrentPhysicsEngine() {
+    for(int i = 0; i < m_thread_count; i++) {
+        m_threads.push_back(new PhysicsThread(this));
     }
 }
 
-void PhysicsEngine::apply_velocities(float dt) {
-    for(auto& vertex : physics_vertices) {
-        vertex->m_position += vertex->m_velocity * dt;
+float ConcurrentPhysicsEngine::get_dt() {
+    return m_dt;
+}
+
+int ConcurrentPhysicsEngine::get_substeps() {
+    return m_substeps_count;
+}
+
+Vec3f ConcurrentPhysicsEngine::get_gravity() {
+    return m_gravity;
+}
+
+float ConcurrentPhysicsEngine::get_floor_level() {
+    return m_floor_level;
+}
+
+template<typename Comparator, typename MemberFunc>
+PhysicsThread* ConcurrentPhysicsEngine::choose_thread(Comparator comp, MemberFunc func) {
+    PhysicsThread* thread = m_threads[0];
+
+    for(int i = 1; i < m_threads.size(); i++) {
+        if(comp((m_threads[i]->*func)().size(), (thread->*func)().size())) thread = m_threads[i];
     }
+
+    return thread;
+}
+
+
+ConcurrentPhysicsEngine::~ConcurrentPhysicsEngine() {
+    for(auto thread : m_threads) { delete thread; }
+    m_threads.clear();
+}
+
+void ConcurrentPhysicsEngine::remove_creature(Creature* creature) {
+    for(auto thread : m_threads) {
+        if(thread->get_creatures().erase(creature) == 1) return;
+    }
+}
+
+void ConcurrentPhysicsEngine::add_creature(Creature* creature) {
+    PhysicsThread* least_loaded_thread = choose_thread(std::less<>(), &PhysicsThread::get_creatures);
+
+    least_loaded_thread->get_creatures().insert(creature);
 }

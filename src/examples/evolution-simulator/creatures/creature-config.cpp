@@ -3,6 +3,7 @@
 //
 
 #include "creature-config.hpp"
+#include "../objects/muscle.hpp"
 
 void VertexConfig::apply(VertexObject* vertex) const {
     auto physical_body = vertex->get_physics_vertex();
@@ -15,5 +16,10 @@ void SpringConfig::apply(SpringObject* spring) const {
     auto physical_body = spring->get_physics_spring();
     physical_body->m_strength = m_strength;
     physical_body->m_damping = m_damping;
-    physical_body->m_target_length = m_target_length;
+}
+
+void MuscleConfig::apply(Muscle* muscle, SpringObject* spring) const {
+    muscle->m_min_length = m_min_length_coefficient * spring->get_physics_spring()->m_target_length;
+    muscle->m_max_length = m_max_length_coefficient * spring->get_physics_spring()->m_target_length;
+    muscle->m_spring = spring;
 }

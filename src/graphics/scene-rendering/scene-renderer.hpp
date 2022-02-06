@@ -32,7 +32,7 @@ class SceneRenderer {
     Camera* m_main_camera = nullptr;
     OrthogonalCamera m_light_camera {};
 
-    Vec3f m_ambient_light { 0.01, 0.11, 0.22 };
+    Vec3f m_ambient_light { 0.3, 0.3, 0.3 };
     Vec2i m_screen_size { 1000, 1000 };
 
     int m_current_light_index = 0;

@@ -3,6 +3,7 @@
 //
 
 #include "evolution-simulator.hpp"
+#include "creatures/creature-generator.hpp"
 
 void EvolutionSimulator::on_tick() {
     reset_gl();
@@ -19,7 +20,24 @@ void EvolutionSimulator::on_mouse_move(double x, double y) {
 }
 
 void EvolutionSimulator::on_draw() {
-    m_world->tick(1.0f / 60.0f);
+
+    float dt = 1.0f / 60.0f;
+    int speed = 1;
+
+    if(m_speedup) speed *= 20;
+
+    for(int j = 0; j < speed; j++) {
+        m_world->get_physics_engine()->tick();
+        m_generation_time += dt;
+    }
+
+    m_world->tick(dt);
+
+    if(m_generation_time > 10.0f) {
+        m_generation_time = 0.0f;
+        next_generation();
+    }
+
     m_world->draw();
 }
 
@@ -32,10 +50,10 @@ void EvolutionSimulator::create_window(int width, int height) {
     settings.attributeFlags |= sf::ContextSettings::Core;
 
     m_window = std::make_unique<sf::RenderWindow>(
-            sf::VideoMode(width, height, 32),
-            "3D Stuff",
-            sf::Style::Titlebar | sf::Style::Close,
-            settings
+        sf::VideoMode(width, height, 32),
+        "3D Stuff",
+        sf::Style::Titlebar | sf::Style::Close,
+        settings
     );
 
     m_window->setFramerateLimit(60);
@@ -59,7 +77,7 @@ void EvolutionSimulator::clear_window() {
 void EvolutionSimulator::on_key_press(sf::Keyboard::Key key) {
     GeneralApp::on_key_press(key);
 
-
+    if(key == sf::Keyboard::F) m_speedup = !m_speedup;
 }
 
 void EvolutionSimulator::on_key_release(sf::Keyboard::Key key) {
@@ -67,10 +85,9 @@ void EvolutionSimulator::on_key_release(sf::Keyboard::Key key) {
 }
 
 EvolutionSimulator::EvolutionSimulator() : GeneralApp() {
-    create_window(1600, 1600);
+    create_window(2200, 1600);
     m_world = std::make_unique<EvolutionWorld>();
     m_camera = std::make_unique<PerspectiveCamera>();
-
     m_camera->set_position({0, 3, -3});
 
     m_world->get_renderer()->set_camera(m_camera.get());
@@ -78,45 +95,57 @@ EvolutionSimulator::EvolutionSimulator() : GeneralApp() {
     auto size = m_window->getSize();
     m_world->set_screen_size({(int) size.x, (int) size.y});
 
-    for(int i = 0; i < 500; i++) {
-        add_creature();
-    }
+    m_camera->set_aspect((float) size.x / (float) size.y);
+
+    create_initial_generation();
 
     m_world->get_renderer()->add_light({{ 0.3, -0.8, 0.5 }, { 1, 1, 1 }});
 }
 
-void EvolutionSimulator::add_creature() {
+void EvolutionSimulator::next_generation() {
+    std::sort(m_creatures.begin(), m_creatures.end());
+    std::cout << "Running generation " << m_generation_index++ << ", best creature score is " << m_creatures[0].m_creature->get_score() << "\n";
 
-    float randomized = (float)rng() / (float)std::mt19937::max();
+    int from = m_creatures.size() / 2;
 
-    Vec3f offset = { 170 + randomized, 0, 10 + randomized };
+    for(int i = 0; i < m_creatures.size(); i++) {
+        if(i >= from) {
+            m_creatures[i].m_config = m_creatures[i - from].m_config;
+            m_creature_mutator.mutate(m_creatures[i].m_config);
+        }
 
-    std::vector<VertexConfig> vertices_config {
-            { 0.5f, 10.0f, offset + Vec3f {2, 0, -2} },
-            { 0.5f, 10.0f, offset + Vec3f {2, 0, 2} },
-            { 0.5f, 10.0f, offset + Vec3f {-2, 0, -2} },
-            { 0.5f, 10.0f, offset + Vec3f {0, 2, 0} }
-    };
+        delete m_creatures[i].m_creature;
 
-    std::vector<SpringConfig> springs_config {
-            { randomized + 50.0f, randomized + 5.0f,3.0f, 0, 1 },
-            { randomized + 50.0f, randomized + 5.0f,3.0f, 1, 2 },
-            { randomized + 50.0f, randomized + 5.0f,3.0f, 2, 0 },
-            { randomized + 50.0f, randomized + 5.0f,3.0f, 0, 3 },
-            { randomized + 50.0f, randomized + 5.0f,3.0f, 1, 3 },
-            { randomized + 50.0f, randomized + 5.0f,3.0f, 2, 3 }
-    };
+        m_creatures[i].m_creature = new Creature(m_world.get(), m_creatures[i].m_config);
+        if(i == 0) m_creatures[i].m_creature->make_visible();
 
-    CreatureConfig config {
-            std::move(vertices_config),
-            std::move(springs_config)
-    };
+        for(auto vertex : m_creatures[i].m_creature->get_vertices()) {
+            vertex->get_physics_vertex()->m_position.x += (float)(i % 30) * 20;
+            vertex->get_physics_vertex()->m_position.z += (float)(i / 30) * 20;
+        }
 
-    auto creature = new Creature(m_world.get(), config);
-
-    for(auto vertex : creature->get_vertices()) {
-        vertex->get_physics_vertex()->m_velocity = {-90 + randomized, 3 + randomized, 0};
+        m_creatures[i].m_creature->fix_center();
     }
+}
 
-    if(!m_creature) m_creature = creature;
+void EvolutionSimulator::create_initial_generation() {
+
+    int count = 2000;
+    m_creatures.resize(count);
+
+    for(int i = 0; i < count; i++) {
+
+        m_creature_generator.generate_creature(i, &m_creatures[i].m_config);
+
+        auto creature = new Creature(m_world.get(), m_creatures[i].m_config);
+
+        for(auto vertex : creature->get_vertices()) {
+            vertex->get_physics_vertex()->m_position.x += (float)(i % 30) * 20;
+            vertex->get_physics_vertex()->m_position.z += (float)(i / 30) * 20;
+        }
+
+        m_creatures[i].m_creature = creature;
+        m_creatures[i].m_creature->fix_center();
+        if(i == 0) m_creatures[i].m_creature->make_visible();
+    }
 }

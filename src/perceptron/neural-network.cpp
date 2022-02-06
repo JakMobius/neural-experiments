@@ -13,12 +13,21 @@ NeuralNetwork::NeuralNetwork(int inner_neurons, int outer_neurons, const std::ve
 
     m_layers.push_back(new Layer(outer_neurons));
 
-//        std::random_device dev;
-//        std::mt19937 rng(dev());
-    std::mt19937 rng(0);
-
     for(int i = 1; i < m_layers.size(); i++) {
         m_layers[i - 1]->set_next_layer(m_layers[i]);
-        m_layers[i - 1]->randomize(rng);
+    }
+}
+
+NeuralNetwork::NeuralNetwork(const NeuralNetworkConfig &config) {
+    m_layers.push_back(new Layer(config.m_inner_neurons));
+
+    int neurons = config.m_inner_neurons;
+
+    for(auto& weights : config.m_weights) {
+        neurons = (int) weights.size() / (neurons + 1);
+        auto layer = new Layer(neurons);
+        m_layers.back()->set_next_layer(layer);
+        m_layers.back()->set_transition_matrix(weights);
+        m_layers.push_back(layer);
     }
 }

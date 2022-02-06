@@ -45,6 +45,7 @@ public:
     std::vector<double>& get_values() { return m_values; }
     const std::vector<double>& get_values() const { return m_values; }
 
+    void set_transition_matrix(const std::vector<double>& matrix) { m_transition_matrix = matrix; }
     std::vector<double>& get_transition_matrix() { return m_transition_matrix; }
     const std::vector<double>& get_transition_matrix() const { return m_transition_matrix; }
 };

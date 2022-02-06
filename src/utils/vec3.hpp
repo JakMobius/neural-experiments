@@ -68,6 +68,8 @@ struct Vec3 {
         return Vec3 {res};
     }
 
+    void set(int index, T y) { m_content[index] = y; }
+
     T operator[](const int i) const { return m_content[i]; }
 
     inline Vec3<T> operator+() { return *this; }

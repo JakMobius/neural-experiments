@@ -9,7 +9,18 @@
 #include "objects/spring-object.hpp"
 #include "objects/vertex-object.hpp"
 #include "creatures/creature.hpp"
+#include "creatures/creature-generator.hpp"
+#include "creatures/creature-mutator.hpp"
 #include <random>
+
+struct ConfiguredCreature {
+    Creature* m_creature;
+    CreatureConfig m_config;
+
+    bool operator<(const ConfiguredCreature& other) const {
+        return m_creature->get_score() > other.m_creature->get_score();
+    }
+};
 
 class EvolutionSimulator : public GeneralApp {
 
@@ -18,10 +29,19 @@ class EvolutionSimulator : public GeneralApp {
     std::unique_ptr<EvolutionWorld> m_world {};
     std::unique_ptr<PerspectiveCamera> m_camera {};
 
-    Creature* m_creature = nullptr;
-
     Graphics::GeometryObject* object = nullptr;
     std::mt19937 rng { 0 };
+
+    CreatureGenerator m_creature_generator {};
+    CreatureMutator m_creature_mutator {};
+
+    bool m_speedup = false;
+
+    std::vector<ConfiguredCreature> m_creatures {};
+
+    float m_generation_time = 0;
+
+    int m_generation_index = 0;
 
     void create_window(int width, int height);
 
@@ -41,5 +61,6 @@ public:
     void on_key_press(sf::Keyboard::Key key) override;
     void on_key_release(sf::Keyboard::Key key) override;
 
-    void add_creature();
+    void create_initial_generation();
+    void next_generation();
 };

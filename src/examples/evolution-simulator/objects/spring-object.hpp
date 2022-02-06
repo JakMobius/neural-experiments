@@ -17,5 +17,7 @@ public:
     PhysicsSpring* get_physics_spring() { return m_physics_spring.get(); }
     Graphics::GeometryObject* get_geometry_object() { return m_geometry_object; }
 
+    void create_colored_mesh(const Vec3f& color);
+
     void tick(float dt) override;
 };

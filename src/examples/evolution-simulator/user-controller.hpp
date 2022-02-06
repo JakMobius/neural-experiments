@@ -11,7 +11,7 @@ class UserController {
     Camera* m_controlled_camera;
     bool m_dummy_mouse_event_received = false;
     float m_pitch = 0;
-    float m_camera_speed = 10.0f;
+    float m_camera_speed = 30.0f;
     float yaw = 0;
     bool m_capture_mouse = true;
 

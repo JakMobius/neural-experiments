@@ -10,7 +10,7 @@ protected:
     Vec3f m_camera_y = {0, 1, 0};
     Vec3f m_camera_x = {1, 0, 0};
     float m_near = 0.1;
-    float m_far = 100;
+    float m_far = 1000;
 
     mutable bool m_needs_update = true;
     mutable Matrix4f m_camera_matrix {};

@@ -9,6 +9,8 @@ ImageMemorizer::ImageMemorizer() : BitmapApp() {
             8, 8, 8, 8, 8, 8, 8, 8
     });
 
+    m_net->randomize(0);
+
     m_target_image = std::make_unique<sf::Image>();
     m_target_image->loadFromFile("./resources/target.png");
 

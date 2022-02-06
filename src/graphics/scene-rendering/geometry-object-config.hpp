@@ -12,7 +12,7 @@ struct SceneVertex {
     SceneVertex(const Vec3f& position, const Vec3f& normal, const Vec3f& color):
         m_position(position.x, position.y, position.z),
         m_normal(normal.x, normal.y, normal.z),
-        m_color(color.x, color.y, normal.z) {
+        m_color(color.x, color.y, color.z) {
     }
 
     // 9 floats + additional 32-bit matrix index

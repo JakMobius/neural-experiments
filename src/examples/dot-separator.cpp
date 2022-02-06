@@ -12,6 +12,7 @@ DotSeparator::DotSeparator() : BitmapApp() {
         16, 16, 16, 16
     });
 
+    m_net->randomize(0);
     m_net->set_learning_rate(0.01);
 
     for(int i = 0; i < 10; i++) {
@@ -36,7 +37,7 @@ void DotSeparator::learn() {
     auto& outputs = m_net->get_output();
     auto& errors = m_net->get_errors();
 
-    for(int i = 0; i < 1000; i++) {
+    for(int i = 0; i < 2000; i++) {
 
         for(auto& point : m_black_points) {
             inputs[0] = point.x;

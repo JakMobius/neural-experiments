@@ -8,17 +8,22 @@
 
 VertexObject::VertexObject(EvolutionWorld* world) : WorldObject(world) {
     m_physics_vertex = std::make_unique<PhysicsVertex>();
-
-    ShapeGenerator generator;
-    generator.add_cube({}, {0.5, 0.5, 0.5}, {1, 0, 0});
-
-    m_geometry_object = m_world->get_renderer()->get_geometry_pool()->create_object({ generator.get_mesh() }, nullptr);
-    m_world->get_physics_engine()->register_vertex(m_physics_vertex.get());
     m_world->add_object(this);
 }
 
 VertexObject::~VertexObject() {
-    m_world->get_renderer()->get_geometry_pool()->remove_object(m_geometry_object);
-    m_world->get_physics_engine()->delete_vertex(m_physics_vertex.get());
+    if(m_geometry_object) {
+        m_world->get_renderer()->get_geometry_pool()->remove_object(m_geometry_object);
+    }
     m_world->remove_object(this);
+}
+
+void VertexObject::create_colored_mesh(const Vec3f& color) {
+    delete m_geometry_object;
+
+    ShapeGenerator generator;
+    generator.add_cube({}, {0.5, 0.5, 0.5}, color);
+
+    auto geometry_pool = m_world->get_renderer()->get_geometry_pool();
+    m_geometry_object = geometry_pool->create_object({ generator.get_mesh() }, nullptr);
 }

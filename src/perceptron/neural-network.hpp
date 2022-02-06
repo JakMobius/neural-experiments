@@ -4,6 +4,7 @@ class NeuralNetwork;
 
 #include <iostream>
 #include "layer.hpp"
+#include "neural-network-config.hpp"
 
 class NeuralNetwork {
 
@@ -13,6 +14,15 @@ class NeuralNetwork {
 
 public:
     NeuralNetwork(int inner_neurons, int outer_neurons, const std::vector<int>& hidden_layers);
+    explicit NeuralNetwork(const NeuralNetworkConfig& config);
+
+    void randomize(int seed) {
+        std::mt19937 rng(seed);
+
+        for(int i = 1; i < m_layers.size(); i++) {
+            m_layers[i - 1]->randomize(rng);
+        }
+    }
 
     double get_learning_rate() const {
         return m_learning_rate;

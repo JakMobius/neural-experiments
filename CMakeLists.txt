@@ -7,7 +7,7 @@ find_package(SFML 2.5 COMPONENTS graphics REQUIRED)
 
 set(CMAKE_CXX_STANDARD 14)
 
-set(CMAKE_CXX_FLAGS "-O0 -fsanitize=address")
+set(CMAKE_CXX_FLAGS "-O3 -fsanitize=address")
 file(GLOB_RECURSE files "${CMAKE_SOURCE_DIR}/src/*.cpp" "${CMAKE_SOURCE_DIR}/src/*.hpp")
 add_executable(neural-experiments ${files})
 target_link_libraries(neural-experiments sfml-graphics sfml-audio GLEW::GLEW OpenGL::GL)

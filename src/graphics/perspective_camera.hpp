@@ -8,7 +8,7 @@ class PerspectiveCamera : public Camera {
     float m_aspect_ratio = 1.0;
 
 public:
-    PerspectiveCamera(): Camera() {}
+    PerspectiveCamera() : Camera() {}
 
     void update() const override;
 
@@ -16,6 +16,13 @@ public:
 
     void set_fov(float fov) {
         m_fov = fov;
+        m_needs_update = true;
+    }
+
+    float get_aspect() { return m_aspect_ratio; }
+
+    void set_aspect(float aspect) {
+        m_aspect_ratio = aspect;
         m_needs_update = true;
     }
 };

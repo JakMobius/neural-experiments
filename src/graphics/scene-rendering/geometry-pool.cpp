@@ -13,7 +13,7 @@ void GeometryPool::defragment_single_object(GeometryObject* object, int offset) 
 
     adjust_offset_from_arrays(object->m_vertex_buffer_offset + offset, object->m_vertex_buffer_offset);
     memmove(&storage[object->m_vertex_buffer_offset], &storage[object->m_vertex_buffer_offset + offset],
-            offset * sizeof(float));
+            object->m_vertex_buffer_length * sizeof(float));
 
     m_vertex_buffer_dirty_range.extend(object->m_vertex_buffer_offset, object->m_vertex_buffer_offset + object->m_vertex_buffer_length);
 }
@@ -24,22 +24,28 @@ void GeometryPool::defragment_buffer(int limit) {
     GeometryObject* previous = m_defragmented_elements;
     m_defragmented_elements = m_defragmented_elements->m_next;
 
-    if(previous->m_vertex_buffer_offset > 0) {
-        defragment_single_object(previous, previous->m_vertex_buffer_offset);
+    int free_offset = 0;
+
+    if(previous->m_prev) {
+        free_offset = previous->m_prev->m_vertex_buffer_length + previous->m_prev->m_vertex_buffer_offset;
+    }
+
+    if(previous->m_vertex_buffer_offset > free_offset) {
+        defragment_single_object(previous, previous->m_vertex_buffer_offset - free_offset);
         if(!(--limit)) return;
     }
 
-    int free_offset = previous->m_vertex_buffer_length;
+    free_offset = previous->m_vertex_buffer_offset + previous->m_vertex_buffer_length;
 
     for(; m_defragmented_elements; m_defragmented_elements = m_defragmented_elements->m_next) {
         GeometryObject* next = m_defragmented_elements;
 
         if(next->m_vertex_buffer_offset > free_offset) {
-            defragment_single_object(previous, free_offset - next->m_vertex_buffer_offset);
+            defragment_single_object(next, next->m_vertex_buffer_offset - free_offset);
             if(!(--limit)) return;
         }
 
-        previous = next;
+        free_offset = next->m_vertex_buffer_offset + next->m_vertex_buffer_length;
     }
 }
 
@@ -95,7 +101,7 @@ void GeometryPool::remove_offset_from_arrays(int offset) {
     start_indices.erase(start_indices.begin() + array_it);
     size_array.erase(size_array.begin() + array_it);
 
-    std::cout << "Removed array entry on index " << (array_it) << "\n";
+//    std::cout << "Removed array entry on index " << (array_it) << "\n";
 }
 
 void GeometryPool::adjust_offset_from_arrays(int offset, int new_offset) {
@@ -112,6 +118,13 @@ void GeometryPool::remove_object(GeometryObject* object) {
         remove_object(child);
     }
 
+    do {
+        auto dirty_index = std::find(m_dirty_transform_objects.begin(), m_dirty_transform_objects.end(), object);
+        if(dirty_index != m_dirty_transform_objects.end()) {
+            m_dirty_transform_objects.erase(dirty_index);
+        } else break;
+    } while(true);
+
     object->m_children.clear();
 
     auto old_defragmented_handle = m_defragmented_elements;
@@ -120,7 +133,7 @@ void GeometryPool::remove_object(GeometryObject* object) {
 
     m_matrix_buffer_index_pool.release_index(object->m_matrix_buffer_index);
 
-    std::cout << "Deleted object handle on index " << object->m_vertex_buffer_offset << " with stride of " << object->m_vertex_buffer_length << " floats\n";
+//    std::cout << "Deleted object handle on index " << object->m_vertex_buffer_offset << " with stride of " << object->m_vertex_buffer_length << " floats\n";
 
     if(!old_defragmented_handle || old_defragmented_handle->m_matrix_buffer_index >= object->m_matrix_buffer_index) {
         m_defragmented_elements = object->m_prev;
@@ -139,7 +152,7 @@ GeometryObject* GeometryPool::create_object(const SceneObjectConfig &object_conf
     auto buffer_stride = (int) object_config.m_mesh.size() * SceneVertex::length;
     auto free_index = allocate_buffer(buffer_stride);
 
-    std::cout << "Adding object handle on index " << free_index << " with stride of " << buffer_stride << " floats\n";
+//    std::cout << "Adding object handle on index " << free_index << " with stride of " << buffer_stride << " floats\n";
 
     auto matrix_index = m_matrix_buffer_index_pool.get_next();
     initialize_matrix(matrix_index);
@@ -157,7 +170,7 @@ GeometryObject* GeometryPool::create_object(const SceneObjectConfig &object_conf
 
 void GeometryPool::synchronize() {
     if(!m_vertex_buffer_dirty_range.is_empty()) {
-        m_vertex_buffer->synchronize(m_vertex_buffer_dirty_range);
+        m_vertex_buffer->synchronize();
         m_vertex_buffer_dirty_range.clear();
     }
 

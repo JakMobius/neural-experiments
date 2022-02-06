@@ -8,22 +8,20 @@
 
 SpringObject::SpringObject(EvolutionWorld* world) : WorldObject(world) {
     m_physics_spring = std::make_unique<PhysicsSpring>();
-
-    ShapeGenerator generator;
-    generator.add_cube({}, {1.0, 0.2, 0.2}, {0, 1, 0});
-
-    m_geometry_object = m_world->get_renderer()->get_geometry_pool()->create_object({ generator.get_mesh() }, nullptr);
-    m_world->get_physics_engine()->register_spring(m_physics_spring.get());
     m_world->add_object(this);
 }
 
 SpringObject::~SpringObject() {
-    m_world->get_renderer()->get_geometry_pool()->remove_object(m_geometry_object);
-    m_world->get_physics_engine()->delete_spring(m_physics_spring.get());
+    if(m_geometry_object) {
+        m_world->get_renderer()->get_geometry_pool()->remove_object(m_geometry_object);
+    }
+
     m_world->remove_object(this);
 }
 
 void SpringObject::tick(float dt) {
+    if(!m_geometry_object) return;
+
     Vec3f& a_position = m_physics_spring->m_vertex_a->m_position;
     Vec3f& b_position = m_physics_spring->m_vertex_b->m_position;
 
@@ -34,11 +32,11 @@ void SpringObject::tick(float dt) {
     Vec3f basis_z = basis_x.normal().cross(basis_y);
 
     Matrix4f transform({
-       basis_x.x, basis_x.y, basis_x.z, 0,
-       basis_y.x, basis_y.y, basis_y.z, 0,
-       basis_z.x, basis_z.y, basis_z.z, 0,
-       center.x, center.y, center.z, 1,
-   });
+        basis_x.x, basis_x.y, basis_x.z, 0,
+        basis_y.x, basis_y.y, basis_y.z, 0,
+        basis_z.x, basis_z.y, basis_z.z, 0,
+        center.x, center.y, center.z, 1,
+    });
 
     m_geometry_object->set_transform(transform);
 }
@@ -54,5 +52,15 @@ Vec3f SpringObject::get_orthogonal(const Vec3f &direction) {
     result.normalize();
 
     return direction.cross(result);
+}
+
+void SpringObject::create_colored_mesh(const Vec3f& color) {
+    delete m_geometry_object;
+
+    ShapeGenerator generator;
+    generator.add_cube({}, {1.0, 0.2, 0.2}, color);
+
+    auto geometry_pool = m_world->get_renderer()->get_geometry_pool();
+    m_geometry_object = geometry_pool->create_object({ generator.get_mesh() }, nullptr);
 }
 
