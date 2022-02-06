@@ -1,7 +1,9 @@
 #version 410 core
 
-layout(location = 0) in vec3 a_position;
-layout(location = 4) in int a_transform;
+in vec3 a_position;
+in vec3 a_normal;
+in int a_transform;
+in int a_material;
 
 uniform mat4 u_light_camera_matrix;
 uniform samplerBuffer u_matrix_buffer;

@@ -17,7 +17,7 @@ class SceneRenderer;
 namespace Graphics {
 
 class SceneRenderer {
-    const Vec2i m_shadow_map_resolution = {2048, 2048};
+    const Vec2i m_shadow_map_resolution = {4096, 4096};
 
     ShadowProjectionProgram m_shadow_projection_program {};
     ShadowMappingProgram m_shadow_mapping_program {};

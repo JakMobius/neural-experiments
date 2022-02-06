@@ -15,14 +15,14 @@ struct CreatureGenerator {
     float m_min_friction = 0.01;
     float m_max_friction = 2.0;
 
-    Vec3f m_min_pos = {-2, 1, -2};
-    Vec3f m_max_pos = {2, 5, 2};
+    Vec3f m_min_pos = {-0.5, 0.5, -0.5};
+    Vec3f m_max_pos = { 0.5, 1, 0.5};
 
     float m_min_damping = 0.5;
     float m_max_damping = 0.5;
 
-    float m_min_strength = 5.0;
-    float m_max_strength = 50.0;
+    float m_min_strength = 25.0;
+    float m_max_strength = 100.0;
 
     float m_min_muscles = 4;
     float m_max_muscles = 10;

@@ -27,6 +27,7 @@ void Graphics::SceneRenderer::draw() {
 
     m_geometry_pool.defragment_buffer(1);
     m_geometry_pool.update_transforms();
+    m_geometry_pool.update_materials();
     m_geometry_pool.synchronize();
 
     for(m_current_light_index = 0; m_current_light_index < m_directional_lights.size(); m_current_light_index++) {

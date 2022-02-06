@@ -25,7 +25,7 @@ void ShadowMappingProgram::draw() {
     use();
     bind_vao();
 
-    glActiveTexture(GL_TEXTURE1);
+    glActiveTexture(GL_TEXTURE2);
     shadow_framebuffer->m_texture.bind();
 
     Matrix4f bias = Matrix4f({0.5f, 0.0f, 0.0f, 0.0f,
@@ -35,7 +35,7 @@ void ShadowMappingProgram::draw() {
 
     m_camera_matrix_uniform.set_camera_matrix(*m_renderer->get_camera());
     m_light_camera_matrix_uniform.setm44f(m_renderer->get_current_light_camera()->get_matrix() * bias);
-    m_light_map_uniform.set1i(1);
+    m_light_map_uniform.set1i(2);
     m_light_color_uniform.set3f(m_renderer->get_current_light().m_color);
     m_light_direction_uniform.set3f(m_renderer->get_current_light().m_direction);
 
@@ -43,11 +43,11 @@ void ShadowMappingProgram::draw() {
     if(active_framebuffer) active_framebuffer->make_drawing_target();
     else GLFramebuffer::unbind();
 
-    m_previous_framebuffer_uniform.set1i(2);
+    m_previous_framebuffer_uniform.set1i(3);
 
     auto* previous_framebuffer = m_renderer->get_previous_shadow_framebuffer();
     if(previous_framebuffer) {
-        glActiveTexture(GL_TEXTURE2);
+        glActiveTexture(GL_TEXTURE3);
         previous_framebuffer->m_texture.bind();
         m_should_add_previous_framebuffer.set1i(1);
     } else {

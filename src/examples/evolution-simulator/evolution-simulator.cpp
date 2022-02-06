@@ -130,7 +130,7 @@ void EvolutionSimulator::next_generation() {
 
 void EvolutionSimulator::create_initial_generation() {
 
-    int count = 2000;
+    int count = 500;
     m_creatures.resize(count);
 
     for(int i = 0; i < count; i++) {

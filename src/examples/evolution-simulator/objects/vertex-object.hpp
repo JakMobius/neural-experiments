@@ -9,6 +9,7 @@ class VertexObject : public WorldObject {
 
     std::unique_ptr<PhysicsVertex> m_physics_vertex = nullptr;
     Graphics::GeometryObject* m_geometry_object = nullptr;
+    Graphics::Material* m_material = nullptr;
 
 public:
     explicit VertexObject(EvolutionWorld* world);

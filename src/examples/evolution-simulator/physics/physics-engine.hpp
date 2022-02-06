@@ -10,7 +10,7 @@ class ConcurrentPhysicsEngine {
     std::vector<PhysicsThread*> m_threads {};
 
     Vec3f m_gravity { 0, -9.81, 0 };
-    float m_floor_level = 0.25;
+    float m_floor_level = 0.1;
     float m_dt = 1.0f / 60.0f;
     int m_substeps_count = 5;
     int m_thread_count = 8;

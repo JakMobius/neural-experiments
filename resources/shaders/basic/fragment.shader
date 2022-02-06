@@ -2,8 +2,10 @@
 
 precision highp float;
 
+in vec3 vertex_position;
 in vec3 vertex_color;
 in vec4 screen_position;
+in float is_grid;
 out vec3 color;
 
 uniform vec3 u_ambient_light;
@@ -13,5 +15,7 @@ void main() {
   vec2 position = (screen_position.xy / screen_position.w + vec2(1, 1)) * 0.5;
   vec3 light = u_ambient_light + texture(u_shadow_map, position).xyz;
 
-  color = vertex_color * light;
+  float grid_factor = 1 - 0.2 * is_grid * (mod(vertex_position.x, 2) > 1 ? 1 : -1) * (mod(vertex_position.z, 2) > 1 ? 1 : -1);
+
+  color = vertex_color * light * grid_factor;
 }

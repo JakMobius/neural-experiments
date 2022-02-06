@@ -11,6 +11,7 @@ class EvolutionWorld {
     std::unordered_set<WorldObject*> m_objects {};
 
     Graphics::GeometryObject* m_floor = nullptr;
+    Graphics::Material* m_floor_material = nullptr;
 
 public:
     void add_floor();
@@ -20,6 +21,10 @@ public:
         m_renderer = std::make_unique<Graphics::SceneRenderer>();
 
         add_floor();
+    }
+
+    ~EvolutionWorld() {
+        m_renderer->get_geometry_pool()->destroy_material(m_floor_material);
     }
 
     void set_screen_size(const Vec2i& size) { m_renderer->set_screen_size(size); }

@@ -13,8 +13,8 @@ void Graphics::SceneProgram::bind_to_vertex_buffer(Graphics::GLBuffer<float>* ve
         {m_vertex_buffer, {
             {"a_position", 3},
             {"a_normal", 3},
-            {"a_color", 3},
             {"a_transform", 1, AttributeType::integer},
+            {"a_material", 1, AttributeType::integer},
         }}
     });
 }

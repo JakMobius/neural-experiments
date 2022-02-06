@@ -4,7 +4,17 @@
 
 #include "geometry-pool.hpp"
 
-namespace Graphics {
+namespace Graphics{
+
+GeometryPool::GeometryPool() {
+    m_vertex_buffer = std::make_unique<GLBuffer<float>>(GLBufferType::array_buffer, GLBufferUsage::static_draw);
+    m_matrix_buffer = std::make_unique<GLTextureBuffer<float>>(GLTextureInternalFormat::rgba32f, GLBufferUsage::static_draw);
+    m_material_buffer =  std::make_unique<GLTextureBuffer<float>>(GLTextureInternalFormat::rgba32f, GLBufferUsage::static_draw);
+
+    m_vertex_buffer->create_buffer();
+    m_matrix_buffer->create_buffer();
+    m_material_buffer->create_buffer();
+}
 
 void GeometryPool::defragment_single_object(GeometryObject* object, int offset) {
     auto &storage = m_vertex_buffer->get_storage();
@@ -61,31 +71,23 @@ void GeometryPool::extend_buffer(std::vector<float>& buffer, int min_capacity) {
     buffer.resize(capacity);
 }
 
-int GeometryPool::get_free_offset() {
+int GeometryPool::get_free_vertex_buffer_offset() {
     if(m_objects.empty()) return 0;
 
     return m_objects.end()->m_vertex_buffer_offset + m_objects.end()->m_vertex_buffer_length;
 }
 
 int GeometryPool::allocate_buffer(int size) {
-    auto free_index = get_free_offset();
+    auto free_index = get_free_vertex_buffer_offset();
     auto& storage = m_vertex_buffer->get_storage();
 
     if(free_index + size >= storage.size()) {
         defragment_buffer(INT_MAX);
-        free_index = get_free_offset();
+        free_index = get_free_vertex_buffer_offset();
         extend_buffer(storage, free_index + size);
     }
 
     return free_index;
-}
-
-GeometryPool::GeometryPool() {
-    m_vertex_buffer = std::make_unique<GLBuffer<float>>(GLBufferType::array_buffer, GLBufferUsage::static_draw);
-    m_matrix_buffer = std::make_unique<GLTextureBuffer<float>>(GLTextureInternalFormat::rgba32f, GLBufferUsage::static_draw);
-
-    m_vertex_buffer->create_buffer();
-    m_matrix_buffer->create_buffer();
 }
 
 void GeometryPool::insert_offsets_to_arrays(int free_index, int buffer_stride) {
@@ -113,17 +115,12 @@ void GeometryPool::adjust_offset_from_arrays(int offset, int new_offset) {
     *array_it = new_offset;
 }
 
-void GeometryPool::remove_object(GeometryObject* object) {
+void GeometryPool::destroy_object(GeometryObject* object) {
     for(auto& child : object->m_children) {
-        remove_object(child);
+        destroy_object(child);
     }
 
-    do {
-        auto dirty_index = std::find(m_dirty_transform_objects.begin(), m_dirty_transform_objects.end(), object);
-        if(dirty_index != m_dirty_transform_objects.end()) {
-            m_dirty_transform_objects.erase(dirty_index);
-        } else break;
-    } while(true);
+    m_dirty_transform_objects.erase(object);
 
     object->m_children.clear();
 
@@ -143,19 +140,13 @@ void GeometryPool::remove_object(GeometryObject* object) {
     delete object;
 }
 
-void GeometryPool::update_object_transform(GeometryObject* object) {
-    auto index = object->m_matrix_buffer_index;
-    copy_matrix(index, object->m_world_transform);
-}
-
-GeometryObject* GeometryPool::create_object(const SceneObjectConfig &object_config, GeometryObject* parent) {
+GeometryObject* GeometryPool::create_object(const GeometryObjectConfig &object_config, GeometryObject* parent) {
     auto buffer_stride = (int) object_config.m_mesh.size() * SceneVertex::length;
     auto free_index = allocate_buffer(buffer_stride);
 
 //    std::cout << "Adding object handle on index " << free_index << " with stride of " << buffer_stride << " floats\n";
 
-    auto matrix_index = m_matrix_buffer_index_pool.get_next();
-    initialize_matrix(matrix_index);
+    auto matrix_index = create_matrix();
 
     auto object = new GeometryObject(this, free_index, buffer_stride, matrix_index, parent);
     m_objects.push_back(object);
@@ -178,42 +169,35 @@ void GeometryPool::synchronize() {
         m_matrix_buffer->synchronize(m_matrix_buffer_dirty_range);
         m_matrix_buffer_dirty_range.clear();
     }
-}
 
-void GeometryPool::initialize_matrix(int index) {
-    const int matrix_size = 16;
-    index *= matrix_size;
-
-    auto& storage = m_matrix_buffer->get_storage();
-    extend_buffer(storage, index + matrix_size);
-
-    for(int i = 0; i < matrix_size; i++) {
-        storage[index + i] = ((i % 4) == (i / 4)) ? 1 : 0;
+    if(!m_material_buffer_dirty_range.is_empty()) {
+        m_material_buffer->synchronize(m_material_buffer_dirty_range);
+        m_material_buffer_dirty_range.clear();
     }
-
-    m_matrix_buffer_dirty_range.extend(index, index + 16);
 }
 
 void GeometryPool::copy_matrix(int index, const Matrix4f& matrix) {
     const int matrix_size = 16;
-    index *= matrix_size;
 
     auto& storage = m_matrix_buffer->get_storage();
 
     for(int i = 0; i < matrix_size; i++) {
-        storage[index + i] = matrix.m_data[i];
+        storage[index * matrix_size + i] = matrix.m_data[i];
     }
 
-    m_matrix_buffer_dirty_range.extend(index, index + 16);
+    m_matrix_buffer_dirty_range.extend(index * matrix_size, (index + 1) * matrix_size);
 }
 
-void GeometryPool::copy_geometry(int offset, std::vector<SceneVertex> vertices, int matrix_index) {
+void GeometryPool::copy_geometry(int offset, const std::vector<SceneVertex>& vertices, int matrix_index) {
     auto buffer_stride = (int) vertices.size() * SceneVertex::length;
     auto &storage = m_vertex_buffer->get_storage();
 
     for(auto &vertex : vertices) {
-        memcpy(&storage[offset], &vertex, sizeof(SceneVertex));
+        for(int i = 0; i < 3; i++) storage[offset + i + 0] = vertex.m_position[i];
+        for(int i = 0; i < 3; i++) storage[offset + i + 3] = vertex.m_normal[i];
+
         *((int*)&storage[offset + SceneVertex::index_offset]) = matrix_index;
+        *((int*)&storage[offset + SceneVertex::material_offset]) = vertex.m_material->get_buffer_index();
         offset += SceneVertex::length;
     }
 
@@ -228,8 +212,59 @@ void GeometryPool::update_transforms() {
     m_dirty_transform_objects.clear();
 }
 
+void GeometryPool::update_object_transform(GeometryObject* object) {
+    auto index = object->m_matrix_buffer_index;
+    copy_matrix(index, object->m_world_transform);
+}
+
 void GeometryPool::update_transform_delayed(GeometryObject* object) {
-    m_dirty_transform_objects.push_back(object);
+    m_dirty_transform_objects.insert(object);
+}
+
+Material* GeometryPool::create_material() {
+    const int material_size = 4;
+    auto index = m_material_buffer_index_pool.get_next();
+    auto material = new Material(this);
+
+    material->set_buffer_index(index);
+    extend_buffer(m_material_buffer->get_storage(), (index + 1) * material_size);
+    m_material_buffer_dirty_range.extend(index * material_size, (index + 1) * material_size);
+    return material;
+}
+
+void GeometryPool::destroy_material(Material* material) {
+    m_material_buffer_index_pool.release_index(material->get_buffer_index());
+    m_dirty_materials.erase(material);
+}
+
+void GeometryPool::update_material_delayed(Material* material) {
+    m_dirty_materials.insert(material);
+}
+
+void GeometryPool::update_materials() {
+    for(auto& material : m_dirty_materials) update_material(material);
+    m_dirty_materials.clear();
+}
+
+void GeometryPool::update_material(Material* material) {
+    const int material_size = 4;
+    auto index = material->get_buffer_index();
+
+    auto& storage = m_material_buffer->get_storage();
+
+    for(int i = 0; i < 3; i++) {
+        storage[index * material_size + i] = material->get_color()[i];
+    }
+    storage[index * material_size + 3] = material->get_grid() ? 1 : 0;
+
+    m_material_buffer_dirty_range.extend(index * material_size, (index + 1) * material_size);
+}
+
+int GeometryPool::create_matrix() {
+    const int matrix_size = 16;
+    int matrix_index = m_matrix_buffer_index_pool.get_next();
+    extend_buffer(m_matrix_buffer->get_storage(), (matrix_index + 1) * matrix_size);
+    return matrix_index;
 }
 
 }

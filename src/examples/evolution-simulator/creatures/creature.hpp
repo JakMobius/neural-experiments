@@ -44,7 +44,7 @@ public:
 
         return Vec2f(center.x - m_start_position.x, center.z - m_start_position.z).len();
 
-        return result;
+//        return result;
     }
 
     void make_visible() {
@@ -57,13 +57,13 @@ public:
 
         for(auto& muscle : m_muscles) {
             float strength = muscle->m_spring->get_physics_spring()->m_strength;
-            strength = (strength - 0.0) / (50.0 - 0.0);
+            strength = (strength - 25.0) / (100.0 - 25.0);
 
             muscle->m_spring->create_colored_mesh({1 - strength, 1, 1 - strength});
         }
         for(auto& spring : m_springs) {
             float strength = spring->get_physics_spring()->m_strength;
-            strength = (strength - 0.0) / (50.0 - 0.0);
+            strength = (strength - 25.0) / (100.0 - 25.0);
 
             if(!spring->get_geometry_object()) spring->create_colored_mesh({1 - strength, 1 - strength, 1});
         }

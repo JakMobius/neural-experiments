@@ -22,6 +22,7 @@ class SceneRenderingProgram : public SceneProgram {
     Graphics::Uniform m_camera_matrix_uniform;
     Graphics::Uniform m_ambient_light_uniform;
     Graphics::Uniform m_shadow_map_uniform;
+    Graphics::Uniform m_material_buffer_uniform;
 
     Vec3f m_ambient_light {};
 

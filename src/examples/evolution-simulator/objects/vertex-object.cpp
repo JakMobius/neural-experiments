@@ -13,7 +13,7 @@ VertexObject::VertexObject(EvolutionWorld* world) : WorldObject(world) {
 
 VertexObject::~VertexObject() {
     if(m_geometry_object) {
-        m_world->get_renderer()->get_geometry_pool()->remove_object(m_geometry_object);
+        m_world->get_renderer()->get_geometry_pool()->destroy_object(m_geometry_object);
     }
     m_world->remove_object(this);
 }
@@ -21,9 +21,13 @@ VertexObject::~VertexObject() {
 void VertexObject::create_colored_mesh(const Vec3f& color) {
     delete m_geometry_object;
 
-    ShapeGenerator generator;
-    generator.add_cube({}, {0.5, 0.5, 0.5}, color);
-
     auto geometry_pool = m_world->get_renderer()->get_geometry_pool();
+
+    if(!m_material) m_material = geometry_pool->create_material();
+    m_material->set_color(color);
+
+    Graphics::ShapeGenerator generator;
+    generator.add_cube({}, {0.2, 0.2, 0.2}, m_material);
+
     m_geometry_object = geometry_pool->create_object({ generator.get_mesh() }, nullptr);
 }

@@ -1,12 +1,16 @@
 #version 410 core
 
-layout(location = 0) in vec3 a_position;
-layout(location = 2) in vec3 a_color;
-layout(location = 4) in int a_transform;
+in vec3 a_position;
+in vec3 a_normal;
+in int a_transform;
+in int a_material;
 
 uniform mat4 u_camera_matrix;
 uniform samplerBuffer u_matrix_buffer;
+uniform samplerBuffer u_material_buffer;
 
+out float is_grid;
+out vec3 vertex_position;
 out vec3 vertex_color;
 out vec4 screen_position;
 
@@ -24,5 +28,11 @@ void main() {
 
   gl_Position = u_camera_matrix * world_position;
   screen_position = gl_Position;
-  vertex_color = a_color;
+
+  int material_offset = a_material * 1;
+  vec4 color = texelFetch(u_material_buffer, a_material);
+
+  is_grid = color.a;
+  vertex_color = color.rgb;
+  vertex_position = a_position;
 }

@@ -26,7 +26,7 @@ void main() {
   if(diffuse > 0.001) {
     vec3 map_position = light_vertex_position.xyz / light_vertex_position.w;
 
-    map_position.z -= 0.001;
+    map_position.z -= 0.0001;
 
     float factor = clamp(3 * (1.0 - length(map_position.xy - 0.5) * 2), 0.0, 1.0);
     float depth = texture(u_light_map, map_position) * factor + (1 - factor);
