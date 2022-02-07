@@ -29,10 +29,11 @@ void main() {
   gl_Position = u_camera_matrix * world_position;
   screen_position = gl_Position;
 
-  int material_offset = a_material * 1;
-  vec4 color = texelFetch(u_material_buffer, a_material);
+  int material_offset = a_material * 2;
+  vec4 material_data_a = texelFetch(u_material_buffer, material_offset);
 
-  is_grid = color.a;
-  vertex_color = color.rgb;
-  vertex_position = a_position;
+  is_grid = material_data_a.a;
+  vertex_color = material_data_a.rgb;
+
+  vertex_position = world_position.xyz;
 }

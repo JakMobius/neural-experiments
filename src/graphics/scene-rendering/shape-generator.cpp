@@ -3,6 +3,7 @@
 //
 
 #include "shape-generator.hpp"
+#include "shapes/icosahedron.hpp"
 
 void
 Graphics::ShapeGenerator::add_triangle(const Vec3f &p1, const Vec3f &p2, const Vec3f &p3, Graphics::Material* material) {
@@ -60,4 +61,29 @@ void Graphics::ShapeGenerator::add_vertex(const Vec3f &position, const Vec3f &no
 
 void Graphics::ShapeGenerator::reset() {
     m_mesh.clear();
+}
+
+void Graphics::ShapeGenerator::add_sphere(const Vec3f &center, float radius, Graphics::Material* material, int lod) {
+    std::vector<Vec3f> sphere {};
+
+    for(auto& face : IcosahedronShape::faces) {
+        Vec3f vertices[3] = {
+            IcosahedronShape::vertices[face[0]],
+            IcosahedronShape::vertices[face[1]],
+            IcosahedronShape::vertices[face[2]],
+        };
+
+        for(auto& vertex : vertices) {
+            vertex /= IcosahedronShape::icosahedron_radius;
+            sphere.push_back(vertex);
+        }
+    }
+
+    for(int i = 0; i < lod; i++) {
+        increase_sphere_details(sphere);
+    }
+
+    for(auto& vertex : sphere) {
+        add_vertex(vertex * radius += center, vertex, material);
+    }
 }

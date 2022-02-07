@@ -15,6 +15,9 @@
 namespace Graphics {
 
 class GeometryPool {
+    const int material_stride = 8;
+    const int transform_stride = 16;
+
     std::vector<GLint> start_indices {};
     std::vector<GLsizei> size_array {};
 

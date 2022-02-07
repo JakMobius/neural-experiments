@@ -4,27 +4,6 @@
 
 #include "creature-creating-context.hpp"
 
-float CreatureCreatingContext::random_float(float min, float max) const {
-    return (float) (m_generator->m_rnd)() / (float) std::mt19937::max() * (max - min) + min;
-}
-
-double CreatureCreatingContext::random_double(double min, double max) const {
-    return (double) (m_generator->m_rnd)() / (double) std::mt19937::max() * (max - min) + min;
-}
-
-int CreatureCreatingContext::random_int(int min, int max) const {
-    if(min >= max) return max;
-    return m_generator->m_rnd() % (max - min) + min;
-}
-
-Vec3f CreatureCreatingContext::random_vector(const Vec3f& min, const Vec3f& max) const {
-    return Vec3f {
-            random_float(min.x, max.x),
-            random_float(min.y, max.y),
-            random_float(min.z, max.z)
-    };
-}
-
 VertexConfig CreatureCreatingContext::random_vertex() {
     VertexConfig config {};
     config.m_mass = random_float(m_generator->m_min_mass, m_generator->m_max_mass);

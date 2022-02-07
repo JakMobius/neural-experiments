@@ -30,3 +30,12 @@ void Graphics::Material::set_grid(bool grid) {
     m_grid = grid;
     m_geometry_pool->update_material_delayed(this);
 }
+
+float Graphics::Material::get_specular_factor() {
+    return m_specular_factor;
+}
+
+void Graphics::Material::set_specular_factor(float factor) {
+    m_specular_factor = factor;
+    m_geometry_pool->update_material_delayed(this);
+}

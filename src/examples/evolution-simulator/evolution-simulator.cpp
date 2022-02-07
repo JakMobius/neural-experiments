@@ -24,7 +24,7 @@ void EvolutionSimulator::on_draw() {
     float dt = 1.0f / 60.0f;
     int speed = 1;
 
-    if(m_speedup) speed *= 20;
+    if(m_speedup) speed *= 5;
 
     for(int j = 0; j < speed; j++) {
         m_world->get_physics_engine()->tick();
@@ -99,7 +99,7 @@ EvolutionSimulator::EvolutionSimulator() : GeneralApp() {
 
     create_initial_generation();
 
-    m_world->get_renderer()->add_light({{ 0.3, -0.8, 0.5 }, { 1, 1, 1 }});
+    m_world->get_renderer()->add_light({{ 0.3, -0.8, 0.5 }, { 0.6, 0.6, 0.6 }});
 }
 
 void EvolutionSimulator::next_generation() {
@@ -108,24 +108,12 @@ void EvolutionSimulator::next_generation() {
 
     int from = m_creatures.size() / 2;
 
-    for(int i = 0; i < m_creatures.size(); i++) {
-        if(i >= from) {
-            m_creatures[i].m_config = m_creatures[i - from].m_config;
-            m_creature_mutator.mutate(m_creatures[i].m_config);
-        }
-
-        delete m_creatures[i].m_creature;
-
-        m_creatures[i].m_creature = new Creature(m_world.get(), m_creatures[i].m_config);
-        if(i == 0) m_creatures[i].m_creature->make_visible();
-
-        for(auto vertex : m_creatures[i].m_creature->get_vertices()) {
-            vertex->get_physics_vertex()->m_position.x += (float)(i % 30) * 20;
-            vertex->get_physics_vertex()->m_position.z += (float)(i / 30) * 20;
-        }
-
-        m_creatures[i].m_creature->fix_center();
+    for(int i = from; i < m_creatures.size(); i++) {
+        m_creatures[i].m_config = m_creatures[i - from].m_config;
+        m_creature_generator.mutate_creature(&m_creatures[i].m_config);
     }
+
+    release_creatures();
 }
 
 void EvolutionSimulator::create_initial_generation() {
@@ -134,18 +122,29 @@ void EvolutionSimulator::create_initial_generation() {
     m_creatures.resize(count);
 
     for(int i = 0; i < count; i++) {
+        m_creature_generator.generate_creature(&m_creatures[i].m_config);
+    }
 
-        m_creature_generator.generate_creature(i, &m_creatures[i].m_config);
+    release_creatures();
+}
 
-        auto creature = new Creature(m_world.get(), m_creatures[i].m_config);
-
-        for(auto vertex : creature->get_vertices()) {
-            vertex->get_physics_vertex()->m_position.x += (float)(i % 30) * 20;
-            vertex->get_physics_vertex()->m_position.z += (float)(i / 30) * 20;
+void EvolutionSimulator::release_creatures() {
+    for(int i = 0; i < m_creatures.size(); i++) {
+        auto& creature = m_creatures[i];
+        if(creature.m_creature) {
+            delete creature.m_creature;
+            creature.m_creature = nullptr;
         }
 
-        m_creatures[i].m_creature = creature;
+        creature.m_creature = new Creature(m_world.get(), m_creatures[i].m_config);
+
+        for(auto vertex : creature.m_creature->get_vertices()) {
+            vertex->get_physics_vertex()->m_position.x += (float)(i % 30) * 5;
+            vertex->get_physics_vertex()->m_position.z += (float)(i / 30) * 5;
+        }
+
         m_creatures[i].m_creature->fix_center();
-        if(i == 0) m_creatures[i].m_creature->make_visible();
+//        m_creatures[i].m_creature->make_visible();
     }
+    m_creatures[0].m_creature->make_visible();
 }

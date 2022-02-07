@@ -4,9 +4,14 @@
 
 #include "creature-generator.hpp"
 #include "creature-creating-context.hpp"
+#include "creature-mutating-context.hpp"
 
-void CreatureGenerator::generate_creature(int seed, CreatureConfig* target) {
-    m_rnd.seed(seed);
+void CreatureGenerator::generate_creature(CreatureConfig* target) {
     CreatureCreatingContext ctx { this, target };
     ctx.generate_creature();
+}
+
+void CreatureGenerator::mutate_creature( CreatureConfig* target) {
+    CreatureMutatingContext ctx { this, target };
+    ctx.mutate_creature();
 }

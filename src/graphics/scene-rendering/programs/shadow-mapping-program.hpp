@@ -17,6 +17,8 @@ class ShadowMappingProgram : public SceneProgram {
     Graphics::Uniform m_light_direction_uniform;
     Graphics::Uniform m_previous_framebuffer_uniform;
     Graphics::Uniform m_should_add_previous_framebuffer;
+    Graphics::Uniform m_material_buffer_uniform;
+    Graphics::Uniform m_camera_position_uniform;
 
 public:
 

@@ -43,10 +43,11 @@ struct Vec3 {
         else return Vec3<T> {m_content / l};
     }
 
-    inline void normalize() {
+    inline Vec3<T>& normalize() {
         T l = len();
         if(l < 1e-5) m_content = {0, 0, 0};
         else m_content /= l;
+        return *this;
     }
 
     [[nodiscard]] inline bool is_zero() const {
@@ -132,4 +133,5 @@ struct Vec3 {
 
 typedef Vec3<double> Vec3d;
 typedef Vec3<float> Vec3f;
+typedef Vec3<int> Vec3i;
 

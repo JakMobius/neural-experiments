@@ -12,6 +12,7 @@ class Material {
     GeometryPool* m_geometry_pool;
     int m_buffer_index = 0;
     bool m_grid = false;
+    float m_specular_factor = 10;
     Vec3f m_color = {1, 1, 1};
 
 public:
@@ -25,5 +26,8 @@ public:
 
     int get_buffer_index();
     void set_buffer_index(int index);
+
+    float get_specular_factor();
+    void set_specular_factor(float factor);
 };
 }

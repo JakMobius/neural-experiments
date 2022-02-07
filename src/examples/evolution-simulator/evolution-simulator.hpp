@@ -10,7 +10,7 @@
 #include "objects/vertex-object.hpp"
 #include "creatures/creature.hpp"
 #include "creatures/creature-generator.hpp"
-#include "creatures/creature-mutator.hpp"
+#include "creatures/creature-mutating-context.hpp"
 #include <random>
 
 struct ConfiguredCreature {
@@ -30,10 +30,8 @@ class EvolutionSimulator : public GeneralApp {
     std::unique_ptr<PerspectiveCamera> m_camera {};
 
     Graphics::GeometryObject* object = nullptr;
-    std::mt19937 rng { 0 };
 
     CreatureGenerator m_creature_generator {};
-    CreatureMutator m_creature_mutator {};
 
     bool m_speedup = false;
 
@@ -63,4 +61,5 @@ public:
 
     void create_initial_generation();
     void next_generation();
+    void release_creatures();
 };

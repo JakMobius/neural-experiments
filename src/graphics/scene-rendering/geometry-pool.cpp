@@ -177,15 +177,13 @@ void GeometryPool::synchronize() {
 }
 
 void GeometryPool::copy_matrix(int index, const Matrix4f& matrix) {
-    const int matrix_size = 16;
-
     auto& storage = m_matrix_buffer->get_storage();
 
-    for(int i = 0; i < matrix_size; i++) {
-        storage[index * matrix_size + i] = matrix.m_data[i];
+    for(int i = 0; i < 16; i++) {
+        storage[index * transform_stride + i] = matrix.m_data[i];
     }
 
-    m_matrix_buffer_dirty_range.extend(index * matrix_size, (index + 1) * matrix_size);
+    m_matrix_buffer_dirty_range.extend(index * transform_stride, (index + 1) * transform_stride);
 }
 
 void GeometryPool::copy_geometry(int offset, const std::vector<SceneVertex>& vertices, int matrix_index) {
@@ -222,19 +220,22 @@ void GeometryPool::update_transform_delayed(GeometryObject* object) {
 }
 
 Material* GeometryPool::create_material() {
-    const int material_size = 4;
     auto index = m_material_buffer_index_pool.get_next();
     auto material = new Material(this);
 
     material->set_buffer_index(index);
-    extend_buffer(m_material_buffer->get_storage(), (index + 1) * material_size);
-    m_material_buffer_dirty_range.extend(index * material_size, (index + 1) * material_size);
+    extend_buffer(m_material_buffer->get_storage(), (index + 1) * material_stride);
+    m_material_buffer_dirty_range.extend(index * material_stride, (index + 1) * material_stride);
+
+    m_materials.insert(material);
     return material;
 }
 
 void GeometryPool::destroy_material(Material* material) {
     m_material_buffer_index_pool.release_index(material->get_buffer_index());
     m_dirty_materials.erase(material);
+    m_materials.erase(material);
+    delete material;
 }
 
 void GeometryPool::update_material_delayed(Material* material) {
@@ -247,23 +248,22 @@ void GeometryPool::update_materials() {
 }
 
 void GeometryPool::update_material(Material* material) {
-    const int material_size = 4;
     auto index = material->get_buffer_index();
 
     auto& storage = m_material_buffer->get_storage();
 
     for(int i = 0; i < 3; i++) {
-        storage[index * material_size + i] = material->get_color()[i];
+        storage[index * material_stride + i] = material->get_color()[i];
     }
-    storage[index * material_size + 3] = material->get_grid() ? 1 : 0;
+    storage[index * material_stride + 3] = material->get_grid() ? 1 : 0;
+    storage[index * material_stride + 4] = material->get_specular_factor();
 
-    m_material_buffer_dirty_range.extend(index * material_size, (index + 1) * material_size);
+    m_material_buffer_dirty_range.extend(index * material_stride, (index + 1) * material_stride);
 }
 
 int GeometryPool::create_matrix() {
-    const int matrix_size = 16;
     int matrix_index = m_matrix_buffer_index_pool.get_next();
-    extend_buffer(m_matrix_buffer->get_storage(), (matrix_index + 1) * matrix_size);
+    extend_buffer(m_matrix_buffer->get_storage(), (matrix_index + 1) * transform_stride);
     return matrix_index;
 }
 

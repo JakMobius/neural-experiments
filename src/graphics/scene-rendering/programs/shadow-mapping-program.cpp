@@ -16,7 +16,9 @@ ShadowMappingProgram::ShadowMappingProgram():
         m_light_color_uniform(this, "u_light_color"),
         m_light_direction_uniform(this, "u_light_direction"),
         m_previous_framebuffer_uniform(this, "u_previous_framebuffer"),
-        m_should_add_previous_framebuffer(this, "u_should_add_previous_framebuffer") {
+        m_should_add_previous_framebuffer(this, "u_should_add_previous_framebuffer"),
+        m_material_buffer_uniform(this, "u_material_buffer"),
+        m_camera_position_uniform(this, "u_camera_position") {
 }
 
 void ShadowMappingProgram::draw() {
@@ -24,6 +26,9 @@ void ShadowMappingProgram::draw() {
 
     use();
     bind_vao();
+
+    m_renderer->get_geometry_pool()->get_material_buffer()->bind_texture(GL_TEXTURE1);
+    m_material_buffer_uniform.set1i(1);
 
     glActiveTexture(GL_TEXTURE2);
     shadow_framebuffer->m_texture.bind();
@@ -34,6 +39,7 @@ void ShadowMappingProgram::draw() {
                               0.5f, 0.5f, 0.5f, 1.0f});
 
     m_camera_matrix_uniform.set_camera_matrix(*m_renderer->get_camera());
+    m_camera_position_uniform.set3f(m_renderer->get_camera()->get_position());
     m_light_camera_matrix_uniform.setm44f(m_renderer->get_current_light_camera()->get_matrix() * bias);
     m_light_map_uniform.set1i(2);
     m_light_color_uniform.set3f(m_renderer->get_current_light().m_color);
